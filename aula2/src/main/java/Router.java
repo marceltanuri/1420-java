@@ -3,6 +3,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+
 
 public class Router {
 
@@ -24,29 +26,29 @@ public class Router {
                 if (path.startsWith("/cep/")) {
                     String cep = path.substring(5);
                     System.out.println("Received request for CEP: " + cep);
-                    String response = cepRestController.getEnderecoByCep(cep);
-                    sendResponse(clientSocket, response, "200 OK");
+                    Optional<String> response = cepRestController.getEnderecoByCep(cep);
+                    if (response.isPresent()) {
+                        sendResponse(clientSocket, response.get(), "200 OK");
+                    } else {
+                        sendResponse(clientSocket, "{\"error\": \"CEP not found\"}", "404 Not Found");
+                    }
                 } else {
-                    sendResponse(clientSocket, "{"error": "Invalid path"}", "404 Not Found");
+                    sendResponse(clientSocket, "{\"error\": \"Invalid path\"}", "404 Not Found");
                 }
             } else {
-                sendResponse(clientSocket, "{"error": "Invalid request"}", "400 Bad Request");
+                sendResponse(clientSocket, "{\"error\": \"Invalid request\"}", "400 Bad Request");
             }
         }
     }
 
     private void sendResponse(Socket clientSocket, String response, String status) throws IOException {
         OutputStream out = clientSocket.getOutputStream();
-        String mensagem = "HTTP/1.1 "+status+"
-";
-        out.write(mensagem.getBytes());
-        out.write("Content-Type: application/json;
-".getBytes());
-        out.write(("Content-Length: " + response.getBytes(StandardCharsets.UTF_8).length + "
-").getBytes());
-        out.write("
-".getBytes());
-        out.write(response.getBytes());
+        String httpResponse = "HTTP/1.1 " + status + "\r\n" +
+                "Content-Type: application/json\r\n" +
+                "Content-Length: " + response.getBytes(StandardCharsets.UTF_8).length + "\r\n" +
+                "\r\n" +
+                response;
+        out.write(httpResponse.getBytes(StandardCharsets.UTF_8));
         out.flush();
     }
 }

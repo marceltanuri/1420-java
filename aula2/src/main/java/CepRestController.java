@@ -1,3 +1,10 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+
+import java.util.Optional;
+
+
 
 public class CepRestController {
 
@@ -7,16 +14,11 @@ public class CepRestController {
         this.cepRepository = cepRepository;
     }
 
-    public String getEnderecoByCep(String cep) {
-        Endereco endereco = cepRepository.findByCep(cep);
-        if (endereco != null) {
-            return toJson(endereco);
-        } else {
-            return "{\"error\": \"CEP not found\"}";
-        }
+    public Optional<String> getEnderecoByCep(String cep) {
+        return Optional.ofNullable(cepRepository.findByCep(cep)).map(this::toJson);
     }
 
     private String toJson(Endereco endereco) {
-        return "{\"cep\":\"" + endereco.getCep() + "\",\"logradouro\":\"" + endereco.getLogradouro() + "\",\"complemento\":\"" + endereco.getComplemento() + "\",\"unidade\":\"" + endereco.getUnidade() + "\",\"bairro\":\"" + endereco.getBairro() + "\",\"localidade\":\"" + endereco.getLocalidade() + "\",\"uf\":\"" + endereco.getUf() + "\",\"estado\":\"" + endereco.getEstado() + "\",\"regiao\":\"" + endereco.getRegiao() + "\",\"ibge\":\"" + endereco.getIbge() + "\",\"gia\":\"" + endereco.getGia() + "\",\"ddd\":\"" + endereco.getDdd() + "\",\"siafi\":\"" + endereco.getSiafi() + "\",\"geolocalizacao\":{\"lat\":\"" + endereco.getGeolocalizacao().getLat() + "\",\"lng\":\"" + endereco.getGeolocalizacao().getLng() + "\"}}";
+        return new ObjectMapper().valueToTree(endereco).toString();
     }
 }
